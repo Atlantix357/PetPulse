@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-dark text-white font-sans;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-50;
+  }
+  
+  .btn-primary {
+    @apply btn bg-primary hover:bg-primary-light focus:ring-primary;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-secondary hover:bg-secondary-light focus:ring-secondary;
+  }
+  
+  .btn-outline {
+    @apply btn border-2 border-primary text-primary hover:bg-primary hover:text-white focus:ring-primary;
+  }
+  
+  .card {
+    @apply bg-dark-light rounded-xl p-6 border border-dark-lighter hover:border-primary transition-colors duration-300;
+  }
+  
+  .input {
+    @apply bg-dark-lighter border-2 border-dark-lighter rounded-md px-4 py-2 focus:outline-none focus:border-secondary transition-colors duration-300 text-white;
+  }
+  
+  .label {
+    @apply text-gray-300 font-medium mb-1 block;
+  }
+  
+  .neon-border {
+    @apply border border-secondary shadow-neon;
+  }
+  
+  .neon-border-purple {
+    @apply border border-primary shadow-neon-purple;
+  }
+  
+  .glass-effect {
+    @apply bg-dark-light bg-opacity-70 backdrop-blur-md;
+  }
+}
+
+/* Futuristic scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-dark-light;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary-light;
+}
+
+/* Gradient animations */
+.gradient-bg {
+  background: linear-gradient(-45deg, #8A2BE2, #00D4FF, #6A1CB2, #00A8CC);
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
