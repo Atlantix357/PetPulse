@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
-import { PawPrint, Calendar, Weight, Image, AlertCircle } from 'lucide-react';
+import { PawPrint, Calendar, Weight, Image, AlertCircle, X } from 'lucide-react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Card from '../ui/Card';
+
+// Default pet images by species
+const DEFAULT_PET_IMAGES = {
+  dog: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80',
+  cat: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1143&q=80',
+  bird: 'https://images.unsplash.com/photo-1522926193341-e9ffd686c60f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
+  fish: 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1112&q=80',
+  rabbit: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80',
+  hamster: 'https://images.unsplash.com/photo-1425082661705-1834bfd09dca?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1176&q=80',
+  other: 'https://images.unsplash.com/photo-1517849845537-4d257902454a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=735&q=80'
+};
 
 interface PetFormProps {
   onSubmit: (petData: {
@@ -10,7 +21,8 @@ interface PetFormProps {
     birthDate: string;
     weight: number;
     weightUnit: 'kg' | 'lbs';
-    photo: File | null;
+    photoUrl: string;
+    species: string;
   }) => Promise<void>;
   isLoading: boolean;
   initialData?: {
@@ -18,6 +30,8 @@ interface PetFormProps {
     birthDate: string;
     weight: number;
     weightUnit: 'kg' | 'lbs';
+    photoUrl?: string;
+    species?: string;
   };
   isEditing?: boolean;
 }
@@ -32,30 +46,14 @@ const PetForm: React.FC<PetFormProps> = ({
   const [birthDate, setBirthDate] = useState(initialData?.birthDate || '');
   const [weight, setWeight] = useState(initialData?.weight || 0);
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>(initialData?.weightUnit || 'kg');
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [species, setSpecies] = useState(initialData?.species || 'dog');
+  const [customPhotoUrl, setCustomPhotoUrl] = useState(initialData?.photoUrl || '');
   const [error, setError] = useState('');
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Photo size must be less than 5MB');
-        return;
-      }
-      
-      // Check file type
-      if (!['image/jpeg', 'image/png'].includes(file.type)) {
-        setError('Only JPG and PNG formats are supported');
-        return;
-      }
-      
-      setPhoto(file);
-      setPhotoPreview(URL.createObjectURL(file));
-      setError('');
-    }
+  // Get photo URL based on species or custom URL
+  const getPhotoUrl = () => {
+    if (customPhotoUrl) return customPhotoUrl;
+    return DEFAULT_PET_IMAGES[species as keyof typeof DEFAULT_PET_IMAGES] || DEFAULT_PET_IMAGES.other;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,18 +74,14 @@ const PetForm: React.FC<PetFormProps> = ({
       return;
     }
     
-    if (!isEditing && !photo) {
-      setError('Please upload a photo of your pet');
-      return;
-    }
-    
     try {
       await onSubmit({
         name,
         birthDate,
         weight,
         weightUnit,
-        photo,
+        photoUrl: getPhotoUrl(),
+        species
       });
     } catch (err) {
       setError('Failed to save pet information');
@@ -121,6 +115,26 @@ const PetForm: React.FC<PetFormProps> = ({
               fullWidth
               icon={<PawPrint size={18} />}
             />
+            
+            <div className="mt-4">
+              <label className="label">Pet Type</label>
+              <div className="relative">
+                <PawPrint size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <select
+                  value={species}
+                  onChange={(e) => setSpecies(e.target.value)}
+                  className="input pl-10 w-full"
+                >
+                  <option value="dog">Dog</option>
+                  <option value="cat">Cat</option>
+                  <option value="bird">Bird</option>
+                  <option value="fish">Fish</option>
+                  <option value="rabbit">Rabbit</option>
+                  <option value="hamster">Hamster</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
             
             <Input
               id="birth-date"
@@ -163,51 +177,29 @@ const PetForm: React.FC<PetFormProps> = ({
           
           <div>
             <label className="label">Pet Photo</label>
-            <div className="border-2 border-dashed border-dark-lighter rounded-lg p-4 text-center">
-              {photoPreview ? (
-                <div className="relative">
-                  <img
-                    src={photoPreview}
-                    alt="Pet preview"
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPhoto(null);
-                      setPhotoPreview(null);
-                    }}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ) : (
-                <div className="h-48 flex flex-col items-center justify-center">
-                  <Image size={48} className="text-gray-400 mb-2" />
-                  <p className="text-gray-400 text-sm mb-2">Upload a photo of your pet</p>
-                  <p className="text-gray-500 text-xs">JPG or PNG, max 5MB</p>
-                </div>
-              )}
+            <div className="border-2 border-dashed border-dark-lighter rounded-lg p-4">
+              <div className="relative">
+                <img
+                  src={getPhotoUrl()}
+                  alt="Pet preview"
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+              </div>
               
-              <input
-                id="pet-photo"
-                type="file"
-                accept="image/jpeg, image/png"
-                onChange={handlePhotoChange}
-                className="hidden"
-              />
-              <label htmlFor="pet-photo">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="mt-4"
-                  as="span"
-                >
-                  {photoPreview ? 'Change Photo' : 'Upload Photo'}
-                </Button>
-              </label>
+              <div className="mt-4">
+                <p className="text-gray-400 text-sm mb-2">Using default image for {species}</p>
+                <p className="text-gray-500 text-xs mb-4">You can also provide a custom image URL</p>
+                
+                <Input
+                  id="custom-photo-url"
+                  label="Custom Photo URL (optional)"
+                  placeholder="https://example.com/pet-image.jpg"
+                  value={customPhotoUrl}
+                  onChange={(e) => setCustomPhotoUrl(e.target.value)}
+                  fullWidth
+                  icon={<Image size={18} />}
+                />
+              </div>
             </div>
           </div>
         </div>

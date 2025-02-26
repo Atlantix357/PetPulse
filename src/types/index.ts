@@ -13,17 +13,10 @@ export interface Pet {
   birthDate: string;
   weight: number;
   weightUnit: 'kg' | 'lbs';
-  photos: PetPhoto[];
+  photoUrl: string;
   ownerId: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface PetPhoto {
-  id: string;
-  url: string;
-  isPrimary: boolean;
-  uploadedAt: string;
 }
 
 export interface WeightEntry {
