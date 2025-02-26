@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase/config';
+import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/layout/Layout';
 import PetForm from '../components/pets/PetForm';
@@ -17,45 +16,29 @@ const AddPetPage: React.FC = () => {
     birthDate: string;
     weight: number;
     weightUnit: 'kg' | 'lbs';
-    photo: File | null;
+    photoUrl: string;
+    species: string;
   }) => {
     if (!currentUser) return;
     
     setLoading(true);
     
     try {
-      let photoURL = '';
-      let photoId = '';
-      
-      // Upload photo if provided
-      if (petData.photo) {
-        const photoRef = ref(storage, `pets/${currentUser.uid}/${Date.now()}_${petData.photo.name}`);
-        await uploadBytes(photoRef, petData.photo);
-        photoURL = await getDownloadURL(photoRef);
-        photoId = photoRef.fullPath;
-      }
-      
       // Create pet document
       const petRef = await addDoc(collection(db, 'pets'), {
         name: petData.name,
         birthDate: petData.birthDate,
         weight: petData.weight,
         weightUnit: petData.weightUnit,
-        photos: [
-          {
-            id: photoId,
-            url: photoURL,
-            isPrimary: true,
-            uploadedAt: new Date().toISOString(),
-          },
-        ],
+        imageUrl: petData.photoUrl,
+        species: petData.species,
         ownerId: currentUser.uid,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
       
       // Add initial weight entry
-      await addDoc(collection(db, 'weightEntries'), {
+      await addDoc(collection(db, 'weightRecords'), {
         petId: petRef.id,
         date: new Date().toISOString().split('T')[0],
         value: petData.weight,

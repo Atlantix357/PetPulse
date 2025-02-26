@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase/config';
+import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/layout/Layout';
 import PetForm from '../components/pets/PetForm';
@@ -57,7 +56,8 @@ const EditPetPage: React.FC = () => {
     birthDate: string;
     weight: number;
     weightUnit: 'kg' | 'lbs';
-    photo: File | null;
+    photoUrl: string;
+    species: string;
   }) => {
     if (!currentUser || !petId || !pet) return;
     
@@ -65,32 +65,15 @@ const EditPetPage: React.FC = () => {
     
     try {
       const petRef = doc(db, 'pets', petId);
-      const updateData: any = {
+      const updateData = {
         name: petData.name,
         birthDate: petData.birthDate,
         weight: petData.weight,
         weightUnit: petData.weightUnit,
+        imageUrl: petData.photoUrl,
+        species: petData.species,
         updatedAt: new Date().toISOString(),
       };
-      
-      // Upload new photo if provided
-      if (petData.photo) {
-        const photoRef = ref(storage, `pets/${currentUser.uid}/${Date.now()}_${petData.photo.name}`);
-        await uploadBytes(photoRef, petData.photo);
-        const photoURL = await getDownloadURL(photoRef);
-        const photoId = photoRef.fullPath;
-        
-        // Update photos array - set new photo as primary
-        const updatedPhotos = [...pet.photos.map(p => ({ ...p, isPrimary: false }))];
-        updatedPhotos.push({
-          id: photoId,
-          url: photoURL,
-          isPrimary: true,
-          uploadedAt: new Date().toISOString(),
-        });
-        
-        updateData.photos = updatedPhotos;
-      }
       
       await updateDoc(petRef, updateData);
       
@@ -142,6 +125,15 @@ const EditPetPage: React.FC = () => {
     );
   }
 
+  const initialData = {
+    name: pet.name,
+    birthDate: pet.birthDate,
+    weight: pet.weight || 0,
+    weightUnit: pet.weightUnit || 'kg',
+    photoUrl: pet.imageUrl || '',
+    species: pet.species || 'dog'
+  };
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -149,12 +141,7 @@ const EditPetPage: React.FC = () => {
         <PetForm
           onSubmit={handleUpdatePet}
           isLoading={updating}
-          initialData={{
-            name: pet.name,
-            birthDate: pet.birthDate,
-            weight: pet.weight,
-            weightUnit: pet.weightUnit,
-          }}
+          initialData={initialData}
           isEditing={true}
         />
       </div>
